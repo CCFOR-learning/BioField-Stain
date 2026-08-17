@@ -37,7 +37,7 @@ import numpy as np
 from tqdm import tqdm
 
 from biofield_stain.models.trainer import BioFieldStainTrainer
-from biofield_stain.data.bci_dataset import MISTCropDataModule
+from biofield_stain.data.paired_dataset import MISTCropDataModule
 from biofield_stain.data.mist_dataset import STAIN_TO_LABEL
 from biofield_stain.utils.dab import DABExtractor
 from biofield_stain.utils.metrics import (

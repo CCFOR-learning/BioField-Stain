@@ -255,7 +255,7 @@ def main():
 
     # Paper hyperparameters
     model = BioFieldStainTrainer(
-        # Architecture (identical to BCI except no class conditioning)
+        # Architecture for unified marker-conditioned generation.
         num_classes=5,          # 4 stains + null
         null_class=4,
         class_dim=64,

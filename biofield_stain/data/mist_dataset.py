@@ -18,7 +18,7 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import pytorch_lightning as pl
 
-from biofield_stain.data.bci_dataset import CropPairedDataset
+from biofield_stain.data.paired_dataset import CropPairedDataset
 
 
 STAIN_TO_LABEL = {'HER2': 0, 'Ki67': 1, 'ER': 2, 'PR': 3}

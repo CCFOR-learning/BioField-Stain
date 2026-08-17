@@ -1,8 +1,7 @@
 """
-Crop-based dataset loaders for training on random 512x512 crops from native 1024x1024.
+Crop-based paired dataset loaders for MIST-style H&E/IHC image pairs.
 
-Both BCI and MIST variants share the same crop + augmentation logic.
-UNI features are extracted on-the-fly on GPU (not pre-computed).
+UNI features are extracted on-the-fly on GPU rather than pre-computed.
 """
 
 import os
@@ -167,43 +166,6 @@ class CropPairedDataset(Dataset):
         return he_tensor, ihc_tensor, uni_sub_crops, label, filename
 
 
-class BCICropDataset(CropPairedDataset):
-    """BCI dataset with random 512 crops from 1024x1024 native images."""
-
-    HER2_LABEL_MAP = {'0': 0, '1+': 1, '2+': 2, '3+': 3}
-
-    def __init__(self, he_dir, ihc_dir, image_size=(512, 512),
-                 crop_size=512, augment=False):
-        super().__init__(he_dir, ihc_dir, image_size, crop_size, augment)
-
-        self.he_images = sorted([f for f in os.listdir(he_dir) if f.endswith('.png')])
-        self.ihc_images = sorted([f for f in os.listdir(ihc_dir) if f.endswith('.png')])
-        assert len(self.he_images) == len(self.ihc_images)
-
-        self.labels = [self._parse_label(f) for f in self.he_images]
-
-        from collections import Counter
-        dist = Counter(self.labels)
-        print(f"BCI Crop Dataset: {len(self)} images, classes: {dict(sorted(dist.items()))}")
-
-    def _parse_label(self, filename):
-        parts = filename.replace('.png', '').split('_')
-        if len(parts) >= 3:
-            level = parts[2]
-            if level in self.HER2_LABEL_MAP:
-                return self.HER2_LABEL_MAP[level]
-        raise ValueError(f"Cannot parse label from: {filename}")
-
-    def __len__(self):
-        return len(self.he_images)
-
-    def __getitem__(self, idx):
-        filename = self.he_images[idx]
-        he_img = Image.open(self.he_dir / filename).convert('RGB')
-        ihc_img = Image.open(self.ihc_dir / self.ihc_images[idx]).convert('RGB')
-        return self._process_pair(he_img, ihc_img, self.labels[idx], filename)
-
-
 class MISTCropDataset(CropPairedDataset):
     """MIST dataset with random 512 crops from 1024x1024 native images."""
 
@@ -237,52 +199,6 @@ class MISTCropDataset(CropPairedDataset):
         he_img = Image.open(self.he_dir / filename).convert('RGB')
         ihc_img = Image.open(self.ihc_dir / self.ihc_images[idx]).convert('RGB')
         return self._process_pair(he_img, ihc_img, self.null_class, filename)
-
-
-class BCICropDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size=4,
-                 num_workers=4, image_size=(512, 512), crop_size=512):
-        super().__init__()
-        self.data_dir = Path(data_dir)
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.image_size = image_size
-        self.crop_size = crop_size
-
-    def setup(self, stage=None):
-        if stage == 'fit' or stage is None:
-            self.train_dataset = BCICropDataset(
-                he_dir=self.data_dir / 'HE' / 'train',
-                ihc_dir=self.data_dir / 'IHC' / 'train',
-                image_size=self.image_size,
-                crop_size=self.crop_size,
-                augment=True,
-            )
-        if stage in ('fit', 'validate', 'test') or stage is None:
-            self.val_dataset = BCICropDataset(
-                he_dir=self.data_dir / 'HE' / 'test',
-                ihc_dir=self.data_dir / 'IHC' / 'test',
-                image_size=self.image_size,
-                crop_size=self.crop_size,
-                augment=False,
-            )
-
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=True,
-            num_workers=self.num_workers, pin_memory=True,
-            persistent_workers=self.num_workers > 0,
-        )
-
-    def val_dataloader(self):
-        return DataLoader(
-            self.val_dataset, batch_size=self.batch_size, shuffle=False,
-            num_workers=self.num_workers, pin_memory=True,
-            persistent_workers=self.num_workers > 0,
-        )
-
-    def test_dataloader(self):
-        return self.val_dataloader()
 
 
 class MISTCropDataModule(pl.LightningDataModule):

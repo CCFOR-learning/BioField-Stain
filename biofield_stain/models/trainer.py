@@ -852,7 +852,7 @@ class BioFieldStainTrainer(pl.LightningModule):
         Compares power spectrum magnitudes between generated and target.
         The Fourier magnitude is inherently translation-invariant — shifting
         an image doesn't change its frequency content — so this is robust to
-        the ~30px misalignment in consecutive-cut BCI pairs.
+        local misalignment in consecutive tissue sections.
 
         Focuses on high-frequency bands (outer 75% of spectrum) where
         blurriness manifests as reduced power.
@@ -1537,5 +1537,4 @@ class BioFieldStainTrainer(pl.LightningModule):
         output = output.clamp(-1, 1)
         output, _ = self.apply_biofield_adapter(output, he_images, labels)
         return output
-
 

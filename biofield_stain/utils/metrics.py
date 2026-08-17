@@ -1,7 +1,7 @@
 """
 Consolidated evaluation metrics for BioField-Stain.
 
-Provides standardized metric computation for both BCI and MIST datasets.
+Provides standardized metric computation for paired virtual IHC evaluation.
 
 Metrics:
     - Image quality: FID (Inception + UNI), KID, LPIPS (128+512), SSIM, PSNR
@@ -270,7 +270,7 @@ def compute_dab_metrics(generated, real, labels=None, dab_extractor=None):
     results['dab_gen_mean'] = float(np.mean(gen_scores))
     results['dab_real_mean'] = float(np.mean(real_scores))
 
-    # Per-class metrics (BCI only — MIST passes labels=None)
+    # Per-class metrics are computed only when labels are provided.
     if labels is not None:
         class_names = {0: '0', 1: '1+', 2: '2+', 3: '3+'}
         within_rs = []
@@ -356,7 +356,7 @@ def compute_iod_metrics(generated, real, labels=None):
         r, p = pearsonr(miod_gen, miod_real)
         results['iod_pearson_r'] = float(r)
 
-    # Per-class mIOD (BCI only)
+    # Per-class mIOD is computed only when labels are provided.
     if labels is not None:
         class_names = {0: '0', 1: '1+', 2: '2+', 3: '3+'}
         for cls, name in class_names.items():
